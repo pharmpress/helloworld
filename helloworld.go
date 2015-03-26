@@ -7,8 +7,8 @@ import (
 	"net/http"
 	"html/template"
 	"hash/crc32"
-	//"encoding/hex"
-//	"os"
+	"os"
+	"time"
 )
 
 type Page struct {
@@ -34,9 +34,21 @@ var tmpl = `<html>
 </html>`
 
 func handler(w http.ResponseWriter, r *http.Request) {
+	fmt.Print(time.Now())
+	fmt.Print(" - ")
+	requestIp, _, _ := net.SplitHostPort(r.RemoteAddr)
+	fmt.Print(requestIp)
+	fmt.Print(" - ")
+	fmt.Println(r.RequestURI)
+
 	t, err := template.New("foo").Parse(tmpl)
+	if err != nil {
+		fmt.Fprintf(w, "%s", err)
+	}
 	ip, err := externalIP()
-	
+	if err != nil {
+		fmt.Fprintf(w, "%s", err)
+	}
 	hashCode := int(crc32.ChecksumIEEE([]byte(ip)))
 	mask := 0x1000000
 	bgcolor := hashCode%mask
@@ -44,7 +56,6 @@ func handler(w http.ResponseWriter, r *http.Request) {
 
 	p := &Page{Title: "Hello, World!", Ip: ip, BgColor: bgcolor, FgColor: fgcolor}
 	err = t.Execute(w, p)
-
 	if err != nil {
 		fmt.Fprintf(w, "%s", err)
 	}
@@ -88,9 +99,9 @@ func externalIP() (string, error) {
 }
 
 func main() {
-	fmt.Println("Hello!")
+	fmt.Println("Server Starting ...")
 	http.HandleFunc("/", handler)
-	err := http.ListenAndServe(":8099", nil)
+	err := http.ListenAndServe(os.Getenv("HELLO_PORT"), nil)
 	if err != nil {
 		fmt.Println(err)
 	}

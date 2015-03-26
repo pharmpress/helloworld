@@ -1,9 +1,7 @@
-#FROM scratch
+FROM scratch
 
-#ADD bin/helloworld-linux64-static /helloworld
+ENV HELLO_PORT :8099
 
-#ENTRYPOINT ["/helloworld"]
+ADD bin/helloworld-linux64-static /helloworld
 
-FROM php:5.6-apache
-
-COPY src/ /var/www/html/
+ENTRYPOINT ["/helloworld"]
