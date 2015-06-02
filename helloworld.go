@@ -16,6 +16,7 @@ type Page struct {
     Ip  string
     BgColor int
     FgColor int
+    Request *http.Request
 }
 
 
@@ -27,16 +28,23 @@ var tmpl = `<html>
 	<h1>{{.Title}}</h1>
     <p>
     	<ul>
-    		<li>IP : {{.Ip}}</li>
+    		<li><strong>IP</strong>: {{.Ip}}</li>
+    		<li><strong>RequestIp</strong>: {{.Request.RemoteAddr}}</li>
+    		<li><strong>RequestURI</strong>: {{.Request.RequestURI}}</li>
+    		{{range $key, $value := .Request.Header}} 
+    			<li><strong>{{ $key }}</strong>: {{ $value }}</li>
+    		{{end}}
  		<ul>
+
     </p>
   </body>
 </html>`
 
 func handler(w http.ResponseWriter, r *http.Request) {
+	requestIp, _, _ := net.SplitHostPort(r.RemoteAddr)
+
 	fmt.Print(time.Now())
 	fmt.Print(" - ")
-	requestIp, _, _ := net.SplitHostPort(r.RemoteAddr)
 	fmt.Print(requestIp)
 	fmt.Print(" - ")
 	fmt.Println(r.RequestURI)
@@ -54,7 +62,7 @@ func handler(w http.ResponseWriter, r *http.Request) {
 	bgcolor := hashCode%mask
 	fgcolor := (mask - bgcolor -1)%mask
 
-	p := &Page{Title: "Hello, World!", Ip: ip, BgColor: bgcolor, FgColor: fgcolor}
+	p := &Page{Title: "Hello, World!", Ip: ip, BgColor: bgcolor, FgColor: fgcolor, Request: r}
 	err = t.Execute(w, p)
 	if err != nil {
 		fmt.Fprintf(w, "%s", err)
