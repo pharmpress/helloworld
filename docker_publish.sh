@@ -1,3 +1,3 @@
 #!/bin/bash
 
-docker push rpsrepo.ddns.net:9010/helloworld
+docker push quay.io/pharmpress/helloworld

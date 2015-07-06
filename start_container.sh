@@ -1,4 +1,4 @@
 #!/bin/bash
 
-docker run -p 8099:8099 --rm rpsrepo.ddns.net:9010/helloworld
+docker run -p 8099:8099 --rm quay.io/pharmpress/helloworld
 

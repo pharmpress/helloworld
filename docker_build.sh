@@ -11,4 +11,4 @@ docker run --rm -v "$PWD":/usr/src/myapp -w /usr/src/myapp golang:latest bash .p
 rm -f .payload
 
 
-docker build -t rpsrepo.ddns.net:9010/helloworld .
+docker build -t quay.io/pharmpress/helloworld .
