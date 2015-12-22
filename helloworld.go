@@ -8,6 +8,7 @@ import (
 	"html/template"
 	"hash/crc32"
 	"os"
+	"strings"
 	"time"
 )
 
@@ -20,7 +21,7 @@ type Page struct {
 }
 
 
-var tmpl = `<html>
+var tmplGraph = `<html>
   <head>
     <title>{{.Title}}</title>
     <style>
@@ -904,6 +905,25 @@ border-top-left-radius: 95px;
   </body>
 </html>`
 
+var tmplBack = `<html>
+  <head>
+    <title>{{.Title}}</title>
+  </head>
+  <body style="background-color:#{{printf "%x" .BgColor}};color:#{{printf "%x" .FgColor}}">
+	<h1>{{.Title}}</h1>
+    <p>
+    	<ul>
+    		<li><strong>IP</strong>: {{.Ip}}</li>
+    		<li><strong>RequestIp</strong>: {{.Request.RemoteAddr}}</li>
+    		<li><strong>RequestURI</strong>: {{.Request.RequestURI}}</li>
+    		{{range $key, $value := .Request.Header}}
+    			<li><strong>{{ $key }}</strong>: {{ $value }}</li>
+    		{{end}}
+ 		<ul>
+    </p>
+  </body>
+</html>`
+
 func handler(w http.ResponseWriter, r *http.Request) {
 	requestIp, _, _ := net.SplitHostPort(r.RemoteAddr)
 
@@ -913,6 +933,10 @@ func handler(w http.ResponseWriter, r *http.Request) {
 	fmt.Print(" - ")
 	fmt.Println(r.RequestURI)
 
+	tmpl := tmplBack
+	if strings.Contains(r.RequestURI, "graph") {
+		tmpl = tmplGraph
+	}
 	t, err := template.New("foo").Parse(tmpl)
 	if err != nil {
 		fmt.Fprintf(w, "%s", err)
