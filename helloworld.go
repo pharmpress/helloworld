@@ -15,6 +15,7 @@ import (
 type Page struct {
     Title string
     Ip  string
+    Mac string
     BgColor int
     FgColor int
     Request *http.Request
@@ -846,6 +847,7 @@ border-top-left-radius: 95px;
     <p>
     	<ul>
     		<li><strong>IP</strong>: {{.Ip}}</li>
+			<li><strong>MAC</strong>: {{.Mac}}</li>
     		<li><strong>RequestIp</strong>: {{.Request.RemoteAddr}}</li>
     		<li><strong>RequestURI</strong>: {{.Request.RequestURI}}</li>
     		{{range $key, $value := .Request.Header}} 
@@ -914,6 +916,7 @@ var tmplBack = `<html>
     <p>
     	<ul>
     		<li><strong>IP</strong>: {{.Ip}}</li>
+			<li><strong>MAC</strong>: {{.Mac}}</li>
     		<li><strong>RequestIp</strong>: {{.Request.RemoteAddr}}</li>
     		<li><strong>RequestURI</strong>: {{.Request.RequestURI}}</li>
     		{{range $key, $value := .Request.Header}}
@@ -941,26 +944,26 @@ func handler(w http.ResponseWriter, r *http.Request) {
 	if err != nil {
 		fmt.Fprintf(w, "%s", err)
 	}
-	ip, err := externalIP()
+	ip, macAddress, err := externalIP()
 	if err != nil {
 		fmt.Fprintf(w, "%s", err)
 	}
-	hashCode := int(crc32.ChecksumIEEE([]byte(ip)))
+	hashCode := int(crc32.ChecksumIEEE([]byte(ip + macAddress)))
 	mask := 0x1000000
 	bgcolor := hashCode%mask
 	fgcolor := (mask - bgcolor -1)%mask
 
-	p := &Page{Title: "Hello, World!", Ip: ip, BgColor: bgcolor, FgColor: fgcolor, Request: r}
+	p := &Page{Title: "Hello, World!", Ip: ip, Mac: macAddress, BgColor: bgcolor, FgColor: fgcolor, Request: r}
 	err = t.Execute(w, p)
 	if err != nil {
 		fmt.Fprintf(w, "%s", err)
 	}
 }
 
-func externalIP() (string, error) {
+func externalIP() (string, string, error) {
 	ifaces, err := net.Interfaces()
 	if err != nil {
-		return "", err
+		return "", "", err
 	}
 	for _, iface := range ifaces {
 		if iface.Flags&net.FlagUp == 0 {
@@ -969,9 +972,10 @@ func externalIP() (string, error) {
 		if iface.Flags&net.FlagLoopback != 0 {
 			continue // loopback interface
 		}
+
 		addrs, err := iface.Addrs()
 		if err != nil {
-			return "", err
+			return "", "", err
 		}
 		for _, addr := range addrs {
 			var ip net.IP
@@ -988,10 +992,10 @@ func externalIP() (string, error) {
 			if ip == nil {
 				continue // not an ipv4 address
 			}
-			return ip.String(), nil
+			return ip.String(), iface.HardwareAddr.String(), nil
 		}
 	}
-	return "", errors.New("are you connected to the network?")
+	return "", "", errors.New("are you connected to the network?")
 }
 
 func main() {
